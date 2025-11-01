@@ -5,7 +5,7 @@ class Pawn < Piece
     super(color, :pawn)
   end
 
-  def possible_moves(board, position)
+  def possible_moves(board, position, en_passant_target: nil)
     moves = []
     rank, file = position
 
@@ -32,6 +32,9 @@ class Pawn < Piece
       if board.valid_position?(capture_pos)
         target = board.piece_at(capture_pos)
         if target && target.color != @color
+          moves << capture_pos
+        elsif capture_pos == en_passant_target
+          # En passant capture
           moves << capture_pos
         end
       end

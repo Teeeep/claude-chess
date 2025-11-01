@@ -46,8 +46,22 @@ class Game
     legal_moves = legal_moves_for(from)
     return false unless legal_moves.include?(to)
 
+    # Check for en passant
+    en_passant_capture = false
+    if piece.type == :pawn && to == @en_passant_target
+      en_passant_capture = true
+    end
+
     # Perform the move
     captured = @board.move_piece(from, to)
+
+    # Handle en passant capture
+    if en_passant_capture
+      direction = piece.white? ? 1 : -1
+      captured_pawn_pos = [to[0] + direction, to[1]]
+      captured = @board.piece_at(captured_pawn_pos)
+      @board.place_piece(nil, captured_pawn_pos)
+    end
 
     # Handle promotion
     if parsed[:promotion] && piece.type == :pawn
@@ -81,7 +95,12 @@ class Game
     return [] unless piece
     return [] unless piece.color == @current_player
 
-    possible = piece.possible_moves(@board, position)
+    # Pass en passant target to pawns
+    possible = if piece.type == :pawn
+                 piece.possible_moves(@board, position, en_passant_target: @en_passant_target)
+               else
+                 piece.possible_moves(@board, position)
+               end
 
     # Filter out moves that leave king in check
     possible.select do |move_to|
