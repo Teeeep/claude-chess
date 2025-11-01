@@ -70,6 +70,9 @@ class Game
     update_halfmove_clock(piece, captured)
     switch_player
 
+    # Check for game end
+    check_game_end
+
     true
   end
 
@@ -84,6 +87,26 @@ class Game
     possible.select do |move_to|
       !leaves_king_in_check?(position, move_to)
     end
+  end
+
+  def in_check?(color)
+    king_pos = @board.find_king(color)
+    return false unless king_pos
+
+    opponent = opponent_color(color)
+    @board.pieces_of_color(opponent).any? do |pos, piece|
+      piece.possible_moves(@board, pos).include?(king_pos)
+    end
+  end
+
+  def checkmate?(color)
+    return false unless in_check?(color)
+    no_legal_moves?(color)
+  end
+
+  def stalemate?(color)
+    return false if in_check?(color)
+    no_legal_moves?(color)
   end
 
   private
@@ -165,5 +188,24 @@ class Game
   def perform_castling(side)
     # TODO: Implement in next task
     false
+  end
+
+  def no_legal_moves?(color)
+    @board.pieces_of_color(color).all? do |pos, piece|
+      legal_moves_for(pos).empty?
+    end
+  end
+
+  def check_game_end
+    if checkmate?(@current_player)
+      @game_over = true
+      @result = "#{opponent_color(@current_player)} wins by checkmate"
+    elsif stalemate?(@current_player)
+      @game_over = true
+      @result = "Draw by stalemate"
+    elsif @halfmove_clock >= 100
+      @game_over = true
+      @result = "Draw by fifty-move rule"
+    end
   end
 end
