@@ -19,6 +19,7 @@ class Game
     @en_passant_target = nil
     @game_over = false
     @result = nil
+    @position_history = []
   end
 
   def over?
@@ -82,6 +83,10 @@ class Game
     update_castling_rights(from, piece)
     update_en_passant_target(from, to, piece)
     update_halfmove_clock(piece, captured)
+
+    # Record position for repetition detection
+    @position_history << position_key
+
     switch_player
 
     # Check for game end
@@ -126,6 +131,45 @@ class Game
   def stalemate?(color)
     return false if in_check?(color)
     no_legal_moves?(color)
+  end
+
+  def threefold_repetition?
+    current_position = position_key
+    @position_history.count(current_position) >= 3
+  end
+
+  def insufficient_material?
+    white_pieces = @board.pieces_of_color(:white).map { |_, p| p }
+    black_pieces = @board.pieces_of_color(:black).map { |_, p| p }
+
+    return true if white_pieces.length == 1 && black_pieces.length == 1
+
+    if white_pieces.length == 2 && black_pieces.length == 1
+      minor = white_pieces.find { |p| p.type != :king }
+      return true if minor && [:bishop, :knight].include?(minor.type)
+    end
+
+    if black_pieces.length == 2 && white_pieces.length == 1
+      minor = black_pieces.find { |p| p.type != :king }
+      return true if minor && [:bishop, :knight].include?(minor.type)
+    end
+
+    if white_pieces.length == 2 && black_pieces.length == 2
+      white_bishop = white_pieces.find { |p| p.type == :bishop }
+      black_bishop = black_pieces.find { |p| p.type == :bishop }
+
+      if white_bishop && black_bishop
+        white_pos = @board.pieces_of_color(:white).find { |_, p| p == white_bishop }[0]
+        black_pos = @board.pieces_of_color(:black).find { |_, p| p == black_bishop }[0]
+
+        white_square_color = (white_pos[0] + white_pos[1]) % 2
+        black_square_color = (black_pos[0] + black_pos[1]) % 2
+
+        return true if white_square_color == black_square_color
+      end
+    end
+
+    false
   end
 
   private
@@ -296,6 +340,26 @@ class Game
     elsif @halfmove_clock >= 100
       @game_over = true
       @result = "Draw by fifty-move rule"
+    elsif threefold_repetition?
+      @game_over = true
+      @result = "Draw by threefold repetition"
+    elsif insufficient_material?
+      @game_over = true
+      @result = "Draw by insufficient material"
     end
+  end
+
+  def position_key
+    key = ''
+    @board.instance_variable_get(:@grid).each_with_index do |row, rank|
+      row.each_with_index do |piece, file|
+        if piece
+          key += "#{piece.color[0]}#{piece.type[0]}#{rank}#{file}"
+        end
+      end
+    end
+    key += @castling_rights.to_s
+    key += @en_passant_target.to_s
+    key
   end
 end
