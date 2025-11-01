@@ -186,8 +186,79 @@ class Game
   end
 
   def perform_castling(side)
-    # TODO: Implement in next task
-    false
+    rank = @current_player == :white ? 7 : 0
+    king_file = 4
+
+    # Determine rook position and target squares
+    if side == :kingside
+      rook_file = 7
+      king_to = 6
+      rook_to = 5
+      right_key = @current_player == :white ? :white_kingside : :black_kingside
+    else # queenside
+      rook_file = 0
+      king_to = 2
+      rook_to = 3
+      right_key = @current_player == :white ? :white_queenside : :black_queenside
+    end
+
+    # Check castling rights
+    return false unless @castling_rights[right_key]
+
+    # Check pieces are in place
+    king = @board.piece_at([rank, king_file])
+    rook = @board.piece_at([rank, rook_file])
+    return false unless king.is_a?(King) && rook.is_a?(Rook)
+
+    # Check squares between are empty
+    range = side == :kingside ? (5..6) : (1..3)
+    range.each do |file|
+      return false unless @board.empty?([rank, file])
+    end
+
+    # Check not castling out of check
+    return false if in_check?(@current_player)
+
+    # Check not castling through check
+    path = side == :kingside ? [5, 6] : [2, 3]
+    path.each do |file|
+      # Temporarily move king to check for attacks
+      @board.place_piece(king, [rank, file])
+      @board.place_piece(nil, [rank, king_file])
+
+      if in_check?(@current_player)
+        # Move king back
+        @board.place_piece(king, [rank, king_file])
+        @board.place_piece(nil, [rank, file])
+        return false
+      end
+
+      # Move king back for next check
+      @board.place_piece(king, [rank, king_file])
+      @board.place_piece(nil, [rank, file])
+    end
+
+    # Perform castling
+    @board.place_piece(king, [rank, king_to])
+    @board.place_piece(rook, [rank, rook_to])
+    @board.place_piece(nil, [rank, king_file])
+    @board.place_piece(nil, [rank, rook_file])
+
+    # Record move
+    move = Move.new(
+      from: [rank, king_file],
+      to: [rank, king_to],
+      piece: king,
+      castling: side
+    )
+    @move_history << move
+
+    # Update rights and switch player
+    update_castling_rights([rank, king_file], king)
+    switch_player
+    check_game_end
+
+    true
   end
 
   def no_legal_moves?(color)
