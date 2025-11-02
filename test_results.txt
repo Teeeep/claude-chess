@@ -1,0 +1,195 @@
+/Users/casper/projects/claude-chess/spec/game_spec.rb:91: warning: assigned but unused variable - game
+
+Randomized with seed 59366
+
+King
+  #possible_moves
+    respects board boundaries
+    can capture enemy pieces
+    moves one square in any direction
+    does not move to squares with friendly pieces
+
+Castling
+  queenside castling
+    allows queenside castling
+  white kingside castling
+    prevents castling through check (FAILED - 1)
+    prevents castling if king has moved
+    allows castling when conditions are met
+    prevents castling out of check (FAILED - 2)
+
+Rook
+  #possible_moves
+    moves along files
+    stops at friendly pieces
+    moves along ranks
+    captures enemy pieces
+
+Move
+  #to_algebraic
+    converts piece move with piece letter
+    adds capture notation
+    converts pawn move to algebraic notation
+    handles castling queenside
+    handles castling kingside
+  #initialize
+    creates a move with from, to, and piece
+    stores captured piece if provided
+  .parse_algebraic
+    parses standard algebraic with piece type
+    parses standard algebraic notation for pawn
+    parses long algebraic notation
+    parses with promotion
+  #to_long_algebraic
+    converts to long algebraic notation
+    adds promotion piece if provided
+
+Draw Conditions
+  insufficient material
+    detects king and knight vs king (FAILED - 3)
+    detects king vs king (FAILED - 4)
+    detects king and bishop vs king (FAILED - 5)
+    does not detect insufficient material with pawns
+  threefold repetition
+    detects draw by threefold repetition
+
+Queen
+  #possible_moves
+    combines rook and bishop movements
+    stops at pieces correctly in all directions
+
+Board
+  #move_piece
+    returns captured piece if any
+    moves a piece from one square to another
+  #clone
+    creates a deep copy of the board
+  #pieces_of_color
+    returns all pieces of a given color
+  #initialize
+    creates empty 8x8 board
+    with setup: true
+      sets up initial chess position
+  #find_king
+    returns nil if king not found
+    finds the king of specified color
+
+En Passant
+  allows en passant capture
+  only allows en passant on next move
+
+Piece
+  #initialize
+    creates a piece with color and type
+  #white?
+    returns false for black pieces
+    returns true for white pieces
+  #possible_moves
+    raises NotImplementedError for base class
+  #black?
+    returns false for white pieces
+    returns true for black pieces
+
+Pawn
+  #initialize
+    creates a black pawn
+    creates a white pawn
+  #possible_moves
+    white pawn on starting square
+      cannot move forward two if blocked
+      can move forward two squares
+      can move forward one square
+    white pawn not on starting square
+      can move forward one square only
+    black pawn moves in opposite direction
+      moves down the board
+    white pawn captures
+      cannot capture own pieces
+      can capture diagonally right
+      can capture diagonally left
+
+Bishop
+  #possible_moves
+    stops at friendly pieces
+    moves diagonally in all four directions
+    captures enemy pieces
+
+Game
+  #legal_moves_for
+    returns empty array for empty square
+    returns legal moves for a piece
+    returns empty array for opponent piece
+  #make_move
+    rejects invalid move
+    alternates turns
+    allows valid pawn move
+    adds move to history
+  #checkmate?
+    detects fool's mate
+  #in_check?
+    detects when king is in check
+    returns false when king is not in check
+  #initialize
+    sets up a new game with white to move
+    sets up initial board position
+  #stalemate?
+    detects stalemate when no legal moves but not in check
+
+Knight
+  #possible_moves
+    moves in L-shape patterns
+    can capture enemy pieces
+    can jump over pieces
+    does not move to squares with friendly pieces
+    respects board boundaries
+
+Failures:
+
+  1) Castling white kingside castling prevents castling through check
+     Failure/Error: expect(result).to be false
+
+       expected false
+            got true
+     # ./spec/castling_spec.rb:36:in `block (3 levels) in <top (required)>'
+
+  2) Castling white kingside castling prevents castling out of check
+     Failure/Error: expect(result).to be false
+
+       expected false
+            got true
+     # ./spec/castling_spec.rb:45:in `block (3 levels) in <top (required)>'
+
+  3) Draw Conditions insufficient material detects king and knight vs king
+     Failure/Error: expect(game.insufficient_material?).to be true
+
+       expected true
+            got false
+     # ./spec/draw_conditions_spec.rb:45:in `block (3 levels) in <top (required)>'
+
+  4) Draw Conditions insufficient material detects king vs king
+     Failure/Error: expect(game.insufficient_material?).to be true
+
+       expected true
+            got false
+     # ./spec/draw_conditions_spec.rb:27:in `block (3 levels) in <top (required)>'
+
+  5) Draw Conditions insufficient material detects king and bishop vs king
+     Failure/Error: expect(game.insufficient_material?).to be true
+
+       expected true
+            got false
+     # ./spec/draw_conditions_spec.rb:36:in `block (3 levels) in <top (required)>'
+
+Finished in 0.03334 seconds (files took 0.05807 seconds to load)
+80 examples, 5 failures
+
+Failed examples:
+
+rspec ./spec/castling_spec.rb:30 # Castling white kingside castling prevents castling through check
+rspec ./spec/castling_spec.rb:39 # Castling white kingside castling prevents castling out of check
+rspec ./spec/draw_conditions_spec.rb:39 # Draw Conditions insufficient material detects king and knight vs king
+rspec ./spec/draw_conditions_spec.rb:21 # Draw Conditions insufficient material detects king vs king
+rspec ./spec/draw_conditions_spec.rb:30 # Draw Conditions insufficient material detects king and bishop vs king
+
+Randomized with seed 59366
+
