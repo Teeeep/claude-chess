@@ -3,6 +3,7 @@ require_relative 'move'
 
 class Game
   attr_reader :board, :current_player, :move_history, :result
+  attr_reader :castling_rights, :halfmove_clock, :fullmove_number, :en_passant_target
 
   def initialize
     @board = Board.new(setup: true)
@@ -20,6 +21,20 @@ class Game
     @game_over = false
     @result = nil
     @position_history = []
+  end
+
+  # Set game state (used by FEN import)
+  # @param current_player [Symbol] :white or :black
+  # @param castling_rights [Hash] castling availability for all sides
+  # @param en_passant_target [Array, nil] en passant target square [rank, file]
+  # @param halfmove_clock [Integer] moves since last pawn move or capture
+  # @param fullmove_number [Integer] current move number
+  def set_state(current_player:, castling_rights:, en_passant_target:, halfmove_clock:, fullmove_number:)
+    @current_player = current_player
+    @castling_rights = castling_rights
+    @en_passant_target = en_passant_target
+    @halfmove_clock = halfmove_clock
+    @fullmove_number = fullmove_number
   end
 
   def over?

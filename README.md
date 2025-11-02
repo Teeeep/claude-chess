@@ -19,8 +19,8 @@ A complete, hand-rolled chess engine implementation in Ruby with full rule suppo
 - Position cloning for move validation
 
 ✅ **Test Coverage**
-- 80 comprehensive RSpec test examples
-- 75 passing tests (93.75% pass rate)
+- 115 comprehensive RSpec test examples
+- 100% pass rate (all tests passing)
 - TDD approach throughout development
 
 ## Installation
@@ -47,7 +47,17 @@ bundle exec rspec --format documentation
 ### Play Chess (Interactive CLI)
 
 ```bash
+# Basic game
 ./bin/chess
+
+# With time control (10 minutes per player)
+./bin/chess --time 10
+
+# With time control and increment (10 min + 5 sec per move)
+./bin/chess --time 10 --increment 5
+
+# Load a specific position from FEN
+./bin/chess --fen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 ```
 
 The CLI provides an interactive chess game with:
@@ -56,12 +66,15 @@ The CLI provides an interactive chess game with:
 - Move validation and legal move checking
 - Check, checkmate, and draw detection
 - Move history tracking
+- Chess clock with time controls and increments
+- FEN notation support for position import/export
 - Help system
 
-**Commands:**
+**In-Game Commands:**
 - Enter moves in algebraic notation: `e2e4`, `Nf3`, `O-O`
 - `help` - Show available commands
 - `history` - View move history
+- `fen` - Export current position in FEN notation
 - `quit` - Exit the game
 
 ### Programmatic Usage
@@ -110,9 +123,11 @@ lib/
   move.rb          # Move notation and parsing
   game.rb          # Game logic and rules
   cli.rb           # Interactive command-line interface
+  clock.rb         # Chess clock for time controls
+  fen.rb           # FEN notation import/export
 
 spec/
-  *_spec.rb        # RSpec test files
+  *_spec.rb        # RSpec test files (115 tests, 100% passing)
 ```
 
 ## Architecture
@@ -142,10 +157,10 @@ Built using Test-Driven Development (TDD) with RSpec:
 
 ✅ Core chess engine complete
 ✅ All major rules implemented
-✅ Comprehensive test coverage (100% pass rate)
+✅ Comprehensive test coverage (115 tests, 100% pass rate)
 ✅ CLI interface with interactive gameplay
-🚧 Time controls/clock (planned)
-🚧 FEN support (planned)
+✅ Time controls/clock with increment support
+✅ FEN notation import/export
 
 ## License
 
