@@ -110,12 +110,12 @@ require_relative 'lib/game'
 game = Game.new
 
 # Make moves using algebraic notation (case-insensitive)
-game.make_move('e4')    # Standard algebraic (pawn)
+game.make_move('e4')     # Standard algebraic (pawn)
 game.make_move('e5')
-game.make_move('Nf3')   # Standard algebraic (piece)
+game.make_move('Nf3')    # Standard algebraic (piece)
 game.make_move('Nc6')
-game.make_move('e2e4')  # Long algebraic also supported
-game.make_move('O-O')   # Castling
+game.make_move('Bc4')    # Bishop move
+game.make_move('nf6')    # Case-insensitive (lowercase works too)
 
 # Check game state
 game.in_check?(:white)     # Check if white is in check
