@@ -105,6 +105,8 @@ class CLI
       puts "\n🏆 #{winner.to_s.capitalize} wins by checkmate! 🏆"
     elsif @game.stalemate?(@game.current_player)
       puts "\n🤝 Draw by stalemate"
+    elsif @game.result&.include?("fifty-move rule")
+      puts "\n🤝 Draw by fifty-move rule"
     elsif @game.threefold_repetition?
       puts "\n🤝 Draw by threefold repetition"
     elsif @game.insufficient_material?
@@ -119,7 +121,9 @@ class CLI
 
   def get_move
     print "Move: "
-    gets.chomp.strip.downcase
+    input = gets
+    return 'quit' if input.nil?  # Handle EOF (Ctrl+D) gracefully
+    input.chomp.strip.downcase
   end
 
   def handle_move(move_notation)
