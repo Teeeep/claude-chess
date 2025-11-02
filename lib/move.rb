@@ -48,35 +48,66 @@ class Move
   def self.parse_algebraic(notation)
     result = {}
 
-    # Handle castling
-    if notation == 'O-O' || notation == '0-0'
+    # Validate input
+    return {} if notation.nil? || notation.strip.empty?
+
+    # Normalize notation: handle both upper and lowercase
+    normalized = notation.strip
+
+    # Minimum valid move is 2 characters (e4, f3, etc.)
+    return {} if normalized.length < 2
+
+    # Handle castling (case insensitive)
+    if normalized.match?(/^[oO0]-[oO0]$/i)
       return { castling: :kingside }
-    elsif notation == 'O-O-O' || notation == '0-0-0'
+    elsif normalized.match?(/^[oO0]-[oO0]-[oO0]$/i)
       return { castling: :queenside }
     end
 
-    # Long algebraic: e2e4 or e7e8q
-    if notation.match?(/^[a-h][1-8][a-h][1-8][qrbn]?$/i)
-      result[:from] = parse_square(notation[0..1])
-      result[:to] = parse_square(notation[2..3])
-      result[:promotion] = parse_piece_letter(notation[4]) if notation.length == 5
+    # Long algebraic: e2e4 or e7e8q (case insensitive for promotion piece)
+    if normalized.match?(/^[a-h][1-8][a-h][1-8][qrbnQRBN]?$/)
+      result[:from] = parse_square(normalized[0..1])
+      result[:to] = parse_square(normalized[2..3])
+      result[:promotion] = parse_piece_letter(normalized[4]) if normalized.length == 5
       return result
     end
 
-    # Standard algebraic: e4, Nf3, exd5, etc.
-    # Extract destination square (always last 2 chars, or last 2 before +/#)
-    clean = notation.gsub(/[+#!?]/, '')
+    # Standard algebraic: e4, Nf3, exd5, Nbd7, R1a3, etc.
+    # Remove check/checkmate/annotation symbols
+    clean = normalized.gsub(/[+#!?]/, '')
+
+    # Extract promotion if present (case insensitive) - do this BEFORE extracting destination
+    if clean =~ /=[QRBNqrbn]/
+      promo_match = clean.match(/=([QRBNqrbn])/)
+      result[:promotion] = parse_piece_letter(promo_match[1]) if promo_match
+      # Remove promotion notation from clean string
+      clean = clean.gsub(/=[QRBNqrbn]/, '')
+    end
+
+    # Extract destination square (always last 2 chars after removing promotion)
     dest = clean[-2..]
     result[:to] = parse_square(dest)
 
-    # Extract piece type if present
-    if clean[0] =~ /[KQRBN]/
+    # Extract piece type if present (case insensitive)
+    if clean[0] =~ /[KQRBNkqrbn]/
       result[:piece_type] = parse_piece_letter(clean[0])
     end
 
-    # Extract promotion if present
-    if clean =~ /=[QRBN]/
-      result[:promotion] = parse_piece_letter(clean[-1])
+    # Extract disambiguation (file and/or rank)
+    # Examples: Nbd7 (from b-file), N5f3 (from rank 5), Qh4e1 (from h4)
+    middle = clean[1..-3]  # Everything between piece letter and destination
+    if middle && !middle.empty?
+      # Check for file disambiguation (a-h)
+      if middle =~ /[a-h]/
+        file_char = middle[/[a-h]/]
+        result[:from_file] = file_char.ord - 'a'.ord
+      end
+
+      # Check for rank disambiguation (1-8)
+      if middle =~ /[1-8]/
+        rank_char = middle[/[1-8]/]
+        result[:from_rank] = 8 - rank_char.to_i
+      end
     end
 
     result
@@ -105,7 +136,8 @@ class Move
   end
 
   def self.parse_square(square_str)
-    file = square_str[0].ord - 'a'.ord
+    # Handle both uppercase and lowercase file letters
+    file = square_str[0].downcase.ord - 'a'.ord
     rank = 8 - square_str[1].to_i
     [rank, file]
   end

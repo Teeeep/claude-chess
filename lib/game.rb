@@ -52,7 +52,14 @@ class Game
     from = parsed[:from]
     to = parsed[:to]
 
-    return false unless from && to
+    return false unless to
+
+    # If 'from' is not specified (standard algebraic notation like "Nf3"),
+    # we need to find which piece can make this move
+    unless from
+      from = find_source_square(parsed)
+      return false unless from
+    end
 
     piece = @board.piece_at(from)
     return false unless piece
@@ -362,6 +369,42 @@ class Game
       @game_over = true
       @result = "Draw by insufficient material"
     end
+  end
+
+  # Find source square for standard algebraic notation (e.g., "Nf3", "exd5")
+  # @param parsed [Hash] Parsed move notation containing :to, :piece_type, etc.
+  # @return [Array, nil] Source position [rank, file] or nil if not found
+  def find_source_square(parsed)
+    to = parsed[:to]
+    piece_type = parsed[:piece_type] || :pawn  # Default to pawn if no piece specified
+
+    # Find all pieces of the current player that match the type
+    candidates = []
+    @board.pieces_of_color(@current_player).each do |pos, piece|
+      next unless piece.type == piece_type
+
+      # Check if this piece can legally move to the destination
+      legal_moves = legal_moves_for(pos)
+      candidates << pos if legal_moves.include?(to)
+    end
+
+    return nil if candidates.empty?
+    return candidates.first if candidates.length == 1
+
+    # Multiple candidates - need disambiguation
+    # parsed[:from_file] or parsed[:from_rank] help narrow it down
+    if parsed[:from_file]
+      candidates.select! { |pos| pos[1] == parsed[:from_file] }
+    end
+
+    if parsed[:from_rank]
+      candidates.select! { |pos| pos[0] == parsed[:from_rank] }
+    end
+
+    # Chess rules: if still ambiguous after disambiguation, reject the move
+    return nil if candidates.length > 1
+
+    candidates.first
   end
 
   def position_key
