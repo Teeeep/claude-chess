@@ -1,6 +1,31 @@
 #!/usr/bin/env ruby
 
 require_relative '../lib/cli'
+require 'optparse'
 
-cli = CLI.new
+options = {}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: chess [options]"
+
+  opts.on("-t", "--time MINUTES", Integer, "Time control in minutes (e.g., 10 for 10 minutes)") do |t|
+    options[:time_control] = { initial_time: t * 60 }
+  end
+
+  opts.on("-i", "--increment SECONDS", Integer, "Increment in seconds (e.g., 5 for +5s per move)") do |i|
+    options[:time_control] ||= { initial_time: 600 }
+    options[:time_control][:increment] = i
+  end
+
+  opts.on("-f", "--fen FEN", String, "Load position from FEN notation") do |fen|
+    options[:fen] = fen
+  end
+
+  opts.on("-h", "--help", "Show this help") do
+    puts opts
+    exit
+  end
+end.parse!
+
+cli = CLI.new(**options)
 cli.start

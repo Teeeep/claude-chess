@@ -1,4 +1,6 @@
 require_relative 'game'
+require_relative 'clock'
+require_relative 'fen'
 
 class CLI
   PIECE_SYMBOLS = {
@@ -6,8 +8,9 @@ class CLI
     black: { king: '♚', queen: '♛', rook: '♜', bishop: '♝', knight: '♞', pawn: '♟' }
   }.freeze
 
-  def initialize
-    @game = Game.new
+  def initialize(time_control: nil, fen: nil)
+    @game = fen ? FEN.import(fen) : Game.new
+    @clock = time_control ? Clock.new(**time_control) : nil
   end
 
   def start
@@ -24,7 +27,15 @@ class CLI
   private
 
   def game_loop
+    @clock&.start_move(@game.current_player)
+
     until @game.over?
+      # Check for time expiration
+      if @clock && @clock.time_expired?(@game.current_player)
+        @game_over_reason = :timeout
+        break
+      end
+
       display_board
       display_status
 
@@ -40,13 +51,25 @@ class CLI
       when 'history'
         show_history
         next
+      when 'fen'
+        show_fen
+        next
       when 'undo'
         puts "\nUndo not yet implemented"
         next
       else
-        handle_move(move)
+        if handle_move(move)
+          # Move was successful, update clock
+          if @clock
+            @clock.stop_move
+            @clock.start_move(@game.current_player)
+          end
+        end
       end
     end
+
+    # Stop clock
+    @clock&.stop_move
 
     # Game over
     display_board
@@ -92,6 +115,18 @@ class CLI
       puts "⚠️  CHECK! ⚠️"
     end
 
+    # Display clock times if enabled
+    if @clock
+      white_time = @clock.formatted_time(:white)
+      black_time = @clock.formatted_time(:black)
+      puts "\n⏱  White: #{white_time}  |  Black: #{black_time}"
+
+      # Warn if low on time (< 1 minute)
+      if @clock.time_for(@game.current_player) < 60
+        puts "⚠️  LOW ON TIME! ⚠️"
+      end
+    end
+
     puts ""
   end
 
@@ -100,7 +135,10 @@ class CLI
     puts "GAME OVER".center(50)
     puts "=" * 50
 
-    if @game.checkmate?(@game.current_player)
+    if @game_over_reason == :timeout
+      winner = @game.current_player == :white ? :black : :white
+      puts "\n🏆 #{winner.to_s.capitalize} wins on time! 🏆"
+    elsif @game.checkmate?(@game.current_player)
       winner = @game.current_player == :white ? :black : :white
       puts "\n🏆 #{winner.to_s.capitalize} wins by checkmate! 🏆"
     elsif @game.stalemate?(@game.current_player)
@@ -129,7 +167,7 @@ class CLI
   def handle_move(move_notation)
     if move_notation.empty?
       puts "Please enter a move"
-      return
+      return false
     end
 
     result = @game.make_move(move_notation)
@@ -138,9 +176,11 @@ class CLI
       # Move successful
       last_move = @game.move_history.last
       puts "✓ Played: #{last_move.to_algebraic}"
+      true
     else
       puts "❌ Invalid move: #{move_notation}"
       puts "Try again (or type 'help' for assistance)"
+      false
     end
   end
 
@@ -159,6 +199,7 @@ class CLI
     Commands:
       help     - Show this help
       history  - Show move history
+      fen      - Show current position in FEN notation
       quit     - Exit the game
 
     Tips:
@@ -167,6 +208,19 @@ class CLI
       - Check and checkmate are detected automatically
 
     HELP
+  end
+
+  def show_fen
+    puts "\n" + "=" * 50
+    puts "FEN NOTATION".center(50)
+    puts "=" * 50
+
+    fen = FEN.export(@game)
+    puts "\n#{fen}"
+    puts "\nYou can load this position later with:"
+    puts "  ruby -r./lib/cli -e \"CLI.new(fen: '#{fen}').start\""
+
+    puts ""
   end
 
   def show_history
