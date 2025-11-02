@@ -401,6 +401,9 @@ class Game
       candidates.select! { |pos| pos[0] == parsed[:from_rank] }
     end
 
+    # Chess rules: if still ambiguous after disambiguation, reject the move
+    return nil if candidates.length > 1
+
     candidates.first
   end
 

@@ -48,8 +48,14 @@ class Move
   def self.parse_algebraic(notation)
     result = {}
 
+    # Validate input
+    return {} if notation.nil? || notation.strip.empty?
+
     # Normalize notation: handle both upper and lowercase
     normalized = notation.strip
+
+    # Minimum valid move is 2 characters (e4, f3, etc.)
+    return {} if normalized.length < 2
 
     # Handle castling (case insensitive)
     if normalized.match?(/^[oO0]-[oO0]$/i)
@@ -70,19 +76,21 @@ class Move
     # Remove check/checkmate/annotation symbols
     clean = normalized.gsub(/[+#!?]/, '')
 
-    # Extract destination square (always last 2 chars)
+    # Extract promotion if present (case insensitive) - do this BEFORE extracting destination
+    if clean =~ /=[QRBNqrbn]/
+      promo_match = clean.match(/=([QRBNqrbn])/)
+      result[:promotion] = parse_piece_letter(promo_match[1]) if promo_match
+      # Remove promotion notation from clean string
+      clean = clean.gsub(/=[QRBNqrbn]/, '')
+    end
+
+    # Extract destination square (always last 2 chars after removing promotion)
     dest = clean[-2..]
     result[:to] = parse_square(dest)
 
     # Extract piece type if present (case insensitive)
     if clean[0] =~ /[KQRBNkqrbn]/
       result[:piece_type] = parse_piece_letter(clean[0])
-    end
-
-    # Extract promotion if present (case insensitive)
-    if clean =~ /=[QRBNqrbn]/
-      promo_match = clean.match(/=([QRBNqrbn])/)
-      result[:promotion] = parse_piece_letter(promo_match[1]) if promo_match
     end
 
     # Extract disambiguation (file and/or rank)
@@ -128,7 +136,8 @@ class Move
   end
 
   def self.parse_square(square_str)
-    file = square_str[0].ord - 'a'.ord
+    # Handle both uppercase and lowercase file letters
+    file = square_str[0].downcase.ord - 'a'.ord
     rank = 8 - square_str[1].to_i
     [rank, file]
   end
