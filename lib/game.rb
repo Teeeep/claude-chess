@@ -2,7 +2,7 @@ require_relative 'board'
 require_relative 'move'
 
 class Game
-  attr_reader :board, :current_player, :move_history
+  attr_reader :board, :current_player, :move_history, :result
 
   def initialize
     @board = Board.new(setup: true)
