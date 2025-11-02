@@ -103,34 +103,44 @@ class CLI
 
   def display_board
     puts "\n"
-    puts "    a  b  c  d  e  f  g  h"
-    puts "  ┌" + "──┬" * 7 + "──┐"
+    puts "     a   b   c   d   e   f   g   h"
+    puts "   ┌───┬───┬───┬───┬───┬───┬───┬───┐"
 
     7.downto(0) do |rank|
-      print "#{rank + 1} │"
+      print " #{rank + 1} │"
 
       0.upto(7) do |file|
         piece = @game.board.piece_at([rank, file])
+
+        # Determine square color (light or dark)
+        is_light = (rank + file).even?
+
         if piece
           symbol = PIECE_SYMBOLS[piece.color][piece.type]
-          print " #{symbol} "
-        else
-          # Checkerboard pattern
-          if (rank + file).even?
-            print "   "
+          # Use background colors for checkerboard
+          if is_light
+            print "\033[47m #{symbol} \033[0m"  # White background
           else
-            print " · "
+            print "\033[100m #{symbol} \033[0m"  # Dark gray background
+          end
+        else
+          # Empty square
+          if is_light
+            print "\033[47m   \033[0m"  # White background
+          else
+            print "\033[100m   \033[0m"  # Dark gray background
           end
         end
+
         print "│" unless file == 7
       end
 
       puts "│ #{rank + 1}"
-      puts "  ├" + "──┼" * 7 + "──┤" unless rank == 0
+      puts "   ├───┼───┼───┼───┼───┼───┼───┼───┤" unless rank == 0
     end
 
-    puts "  └" + "──┴" * 7 + "──┘"
-    puts "    a  b  c  d  e  f  g  h"
+    puts "   └───┴───┴───┴───┴───┴───┴───┴───┘"
+    puts "     a   b   c   d   e   f   g   h"
   end
 
   def display_status
