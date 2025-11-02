@@ -19,8 +19,8 @@ A complete, hand-rolled chess engine implementation in Ruby with full rule suppo
 - Position cloning for move validation
 
 ✅ **Test Coverage**
-- 80 comprehensive RSpec test examples
-- 75 passing tests (93.75% pass rate)
+- 115 comprehensive RSpec test examples
+- 100% pass rate (all tests passing)
 - TDD approach throughout development
 
 ## Installation
@@ -127,7 +127,7 @@ lib/
   fen.rb           # FEN notation import/export
 
 spec/
-  *_spec.rb        # RSpec test files (109 tests, 100% passing)
+  *_spec.rb        # RSpec test files (115 tests, 100% passing)
 ```
 
 ## Architecture
@@ -157,7 +157,7 @@ Built using Test-Driven Development (TDD) with RSpec:
 
 ✅ Core chess engine complete
 ✅ All major rules implemented
-✅ Comprehensive test coverage (109 tests, 100% pass rate)
+✅ Comprehensive test coverage (115 tests, 100% pass rate)
 ✅ CLI interface with interactive gameplay
 ✅ Time controls/clock with increment support
 ✅ FEN notation import/export
