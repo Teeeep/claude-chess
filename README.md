@@ -44,6 +44,28 @@ bundle exec rspec --format documentation
 
 ## Usage
 
+### Play Chess (Interactive CLI)
+
+```bash
+./bin/chess
+```
+
+The CLI provides an interactive chess game with:
+- Beautiful Unicode chess pieces (♔♕♖♗♘♙)
+- Checkerboard pattern for empty squares
+- Move validation and legal move checking
+- Check, checkmate, and draw detection
+- Move history tracking
+- Help system
+
+**Commands:**
+- Enter moves in algebraic notation: `e2e4`, `Nf3`, `O-O`
+- `help` - Show available commands
+- `history` - View move history
+- `quit` - Exit the game
+
+### Programmatic Usage
+
 ```ruby
 require_relative 'lib/game'
 
@@ -73,6 +95,9 @@ game.board           # Board object with current position
 ## Project Structure
 
 ```
+bin/
+  chess            # Executable CLI application
+
 lib/
   piece.rb         # Base Piece class
   pawn.rb          # Pawn implementation
@@ -84,6 +109,7 @@ lib/
   board.rb         # Board management
   move.rb          # Move notation and parsing
   game.rb          # Game logic and rules
+  cli.rb           # Interactive command-line interface
 
 spec/
   *_spec.rb        # RSpec test files
@@ -116,8 +142,8 @@ Built using Test-Driven Development (TDD) with RSpec:
 
 ✅ Core chess engine complete
 ✅ All major rules implemented
-✅ Comprehensive test coverage
-🚧 CLI interface (planned)
+✅ Comprehensive test coverage (100% pass rate)
+✅ CLI interface with interactive gameplay
 🚧 Time controls/clock (planned)
 🚧 FEN support (planned)
 
