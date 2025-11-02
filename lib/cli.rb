@@ -1,6 +1,7 @@
 require_relative 'game'
 require_relative 'clock'
 require_relative 'fen'
+require_relative 'chess_ai'
 
 class CLI
   PIECE_SYMBOLS = {
@@ -8,9 +9,12 @@ class CLI
     black: { king: '♚', queen: '♛', rook: '♜', bishop: '♝', knight: '♞', pawn: '♟' }
   }.freeze
 
-  def initialize(time_control: nil, fen: nil)
+  def initialize(time_control: nil, fen: nil, players: nil, vs_claude: false)
     @game = fen ? FEN.import(fen) : Game.new
     @clock = time_control ? Clock.new(**time_control) : nil
+    @vs_claude = vs_claude
+    @chess_ai = vs_claude ? ChessAI.new : nil
+    @players = players || setup_players(vs_claude)
   end
 
   def start
@@ -18,7 +22,10 @@ class CLI
     puts "♔  RUBY CHESS ENGINE  ♔".center(50)
     puts "=" * 50
     puts "\nWelcome to Ruby Chess!"
-    puts "Enter moves in algebraic notation (e.g., e2e4, Nf3, O-O)"
+
+    show_player_assignment
+
+    puts "\nEnter moves in algebraic notation (e.g., e2e4, Nf3, O-O)"
     puts "Type 'help' for commands, 'quit' to exit\n\n"
 
     game_loop
@@ -39,30 +46,48 @@ class CLI
       display_board
       display_status
 
-      move = get_move
+      # Check if it's Claude's turn
+      if @vs_claude && @players[@game.current_player] == "Claude"
+        puts "\nClaude is thinking..."
+        move = @chess_ai.get_move(@game)
 
-      case move
-      when 'quit', 'exit'
-        puts "\nThanks for playing!"
-        exit
-      when 'help'
-        show_help
-        next
-      when 'history'
-        show_history
-        next
-      when 'fen'
-        show_fen
-        next
-      when 'undo'
-        puts "\nUndo not yet implemented"
-        next
-      else
         if handle_move(move)
-          # Move was successful, update clock
+          # Show Claude's reasoning
+          puts @chess_ai.explain_decision
+
+          # Update clock
           if @clock
             @clock.stop_move
             @clock.start_move(@game.current_player)
+          end
+        end
+      else
+        # Human player's turn
+        move = get_move
+
+        case move
+        when 'quit', 'exit'
+          puts "\nThanks for playing!"
+          exit
+        when 'help'
+          show_help
+          next
+        when 'history'
+          show_history
+          next
+        when 'fen'
+          show_fen
+          next
+        when 'undo'
+          puts "\nUndo not yet implemented"
+          next
+        else
+          if handle_move(move)
+            # Move was successful, update clock
+            if @clock
+              @clock.stop_move
+              @clock.start_move(@game.current_player)
+            end
           end
         end
       end
@@ -78,38 +103,49 @@ class CLI
 
   def display_board
     puts "\n"
-    puts "    a  b  c  d  e  f  g  h"
-    puts "  ┌" + "──┬" * 7 + "──┐"
+    puts "     a   b   c   d   e   f   g   h"
+    puts "   ┌───┬───┬───┬───┬───┬───┬───┬───┐"
 
     7.downto(0) do |rank|
-      print "#{rank + 1} │"
+      print " #{rank + 1} │"
 
       0.upto(7) do |file|
         piece = @game.board.piece_at([rank, file])
+
+        # Determine square color (light or dark)
+        is_light = (rank + file).even?
+
         if piece
           symbol = PIECE_SYMBOLS[piece.color][piece.type]
-          print " #{symbol} "
-        else
-          # Checkerboard pattern
-          if (rank + file).even?
-            print "   "
+          # Use chess.com-style colors with black outlined pieces
+          if is_light
+            print "\033[48;5;223m\033[30;1m #{symbol} \033[0m"  # Light square + bold black text
           else
-            print " · "
+            print "\033[48;5;180m\033[30;1m #{symbol} \033[0m"  # Dark square + bold black text
+          end
+        else
+          # Empty square
+          if is_light
+            print "\033[48;5;223m   \033[0m"  # Light beige/tan
+          else
+            print "\033[48;5;180m   \033[0m"  # Dark tan/brown
           end
         end
+
         print "│" unless file == 7
       end
 
       puts "│ #{rank + 1}"
-      puts "  ├" + "──┼" * 7 + "──┤" unless rank == 0
+      puts "   ├───┼───┼───┼───┼───┼───┼───┼───┤" unless rank == 0
     end
 
-    puts "  └" + "──┴" * 7 + "──┘"
-    puts "    a  b  c  d  e  f  g  h"
+    puts "   └───┴───┴───┴───┴───┴───┴───┴───┘"
+    puts "     a   b   c   d   e   f   g   h"
   end
 
   def display_status
-    puts "\n#{@game.current_player.to_s.capitalize} to move"
+    current_player_name = @players[@game.current_player]
+    puts "\n#{current_player_name}'s turn (#{@game.current_player.to_s.capitalize})"
 
     if @game.in_check?(@game.current_player)
       puts "⚠️  CHECK! ⚠️"
@@ -119,7 +155,9 @@ class CLI
     if @clock
       white_time = @clock.formatted_time(:white)
       black_time = @clock.formatted_time(:black)
-      puts "\n⏱  White: #{white_time}  |  Black: #{black_time}"
+      white_player = @players[:white]
+      black_player = @players[:black]
+      puts "\n⏱  #{white_player}: #{white_time}  |  #{black_player}: #{black_time}"
 
       # Warn if low on time (< 1 minute)
       if @clock.time_for(@game.current_player) < 60
@@ -137,10 +175,12 @@ class CLI
 
     if @game_over_reason == :timeout
       winner = @game.current_player == :white ? :black : :white
-      puts "\n🏆 #{winner.to_s.capitalize} wins on time! 🏆"
+      winner_name = @players[winner]
+      puts "\n🏆 #{winner_name} (#{winner.to_s.capitalize}) wins on time! 🏆"
     elsif @game.checkmate?(@game.current_player)
       winner = @game.current_player == :white ? :black : :white
-      puts "\n🏆 #{winner.to_s.capitalize} wins by checkmate! 🏆"
+      winner_name = @players[winner]
+      puts "\n🏆 #{winner_name} (#{winner.to_s.capitalize}) wins by checkmate! 🏆"
     elsif @game.stalemate?(@game.current_player)
       puts "\n🤝 Draw by stalemate"
     elsif @game.result&.include?("fifty-move rule")
@@ -165,7 +205,7 @@ class CLI
   end
 
   def handle_move(move_notation)
-    if move_notation.empty?
+    if move_notation.nil? || move_notation.empty?
       puts "Please enter a move"
       return false
     end
@@ -242,6 +282,63 @@ class CLI
       puts "" if @game.move_history.length.odd?
     end
 
+    puts ""
+  end
+
+  def setup_players(vs_claude = false)
+    if vs_claude
+      # Playing against Claude AI
+      puts "\n" + "=" * 50
+      puts "PLAYER SETUP".center(50)
+      puts "=" * 50
+      puts ""
+
+      print "Enter your name: "
+      input = gets
+      return { white: "Player", black: "Claude" } if input.nil?  # Handle EOF gracefully
+      player_name = input.chomp.strip
+      player_name = "Player" if player_name.empty?
+
+      # Randomly assign colors
+      if rand(2) == 0
+        { white: player_name, black: "Claude" }
+      else
+        { white: "Claude", black: player_name }
+      end
+    else
+      # Two-player mode
+      puts "\n" + "=" * 50
+      puts "PLAYER SETUP".center(50)
+      puts "=" * 50
+      puts ""
+
+      print "Enter name for Player 1: "
+      input = gets
+      return { white: "Player 1", black: "Player 2" } if input.nil?  # Handle EOF gracefully
+      player1 = input.chomp.strip
+      player1 = "Player 1" if player1.empty?
+
+      print "Enter name for Player 2: "
+      input = gets
+      return { white: "Player 1", black: "Player 2" } if input.nil?  # Handle EOF gracefully
+      player2 = input.chomp.strip
+      player2 = "Player 2" if player2.empty?
+
+      # Randomly assign colors
+      if rand(2) == 0
+        { white: player1, black: player2 }
+      else
+        { white: player2, black: player1 }
+      end
+    end
+  end
+
+  def show_player_assignment
+    puts "\n" + "=" * 50
+    puts "COLOR ASSIGNMENT".center(50)
+    puts "=" * 50
+    puts "\n#{@players[:white]} plays as WHITE ♔"
+    puts "#{@players[:black]} plays as BLACK ♚"
     puts ""
   end
 end

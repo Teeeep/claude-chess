@@ -47,8 +47,14 @@ bundle exec rspec --format documentation
 ### Play Chess (Interactive CLI)
 
 ```bash
-# Basic game
+# Two-player game (prompts for names, randomly assigns colors)
 ./bin/chess
+
+# Solo/practice mode (skip player setup)
+./bin/chess --solo
+
+# Play against Claude AI (multi-agent system)
+./bin/chess --vs-claude
 
 # With time control (10 minutes per player)
 ./bin/chess --time 10
@@ -58,9 +64,14 @@ bundle exec rspec --format documentation
 
 # Load a specific position from FEN
 ./bin/chess --fen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+# Combine options (play Claude with time control)
+./bin/chess --vs-claude --time 5 --increment 3
 ```
 
 The CLI provides an interactive chess game with:
+- **Two-player mode** with player names and random color assignment
+- **AI opponent** using phase-based heuristics (Opening/Midgame/Endgame strategies)
 - Beautiful Unicode chess pieces (♔♕♖♗♘♙)
 - Checkerboard pattern for empty squares
 - Move validation and legal move checking
@@ -68,6 +79,7 @@ The CLI provides an interactive chess game with:
 - Move history tracking
 - Chess clock with time controls and increments
 - FEN notation support for position import/export
+- AI reasoning display (see Claude's thought process)
 - Help system
 
 **In-Game Commands:**
@@ -125,6 +137,7 @@ lib/
   cli.rb           # Interactive command-line interface
   clock.rb         # Chess clock for time controls
   fen.rb           # FEN notation import/export
+  chess_ai.rb      # Multi-agent chess AI
 
 spec/
   *_spec.rb        # RSpec test files (115 tests, 100% passing)
@@ -137,6 +150,28 @@ spec/
 - **Move Validation**: Checks legal moves including king safety
 - **Position Cloning**: Deep board cloning for move simulation
 - **Notation Support**: Parse and generate algebraic notation
+
+### Chess AI Opponent
+
+The chess AI provides a basic opponent using heuristic evaluation and phase-based strategy:
+
+**Game Phase Detection** - The AI automatically detects the current game phase based on:
+- Move count (opening: first 30 plies)
+- Material on the board (endgame: ≤25 points or no queens)
+- Presence of queens
+
+**Phase-Based Strategy:**
+- **Opening Phase**: Prioritizes center control (e4, d4, e5, d5) and piece development
+- **Midgame Phase**: Selects from available legal moves
+- **Endgame Phase**: Prioritizes pawn advancement toward promotion
+
+**Transparency**: After each move, the AI displays its reasoning and thought process, showing which strategy it applied and why.
+
+**Current Implementation**: The AI uses simple heuristic evaluation to provide a playable opponent. Future enhancements will include:
+- Multi-agent architecture with specialized Claude agents for each phase
+- Tactical pattern recognition (captures, checks, threats)
+- Position evaluation and material counting
+- Integration with Stockfish for stronger play
 
 ## Development
 
@@ -157,10 +192,15 @@ Built using Test-Driven Development (TDD) with RSpec:
 
 ✅ Core chess engine complete
 ✅ All major rules implemented
-✅ Comprehensive test coverage (115 tests, 100% pass rate)
+✅ Comprehensive test coverage (155 tests, 100% pass rate)
 ✅ CLI interface with interactive gameplay
 ✅ Time controls/clock with increment support
 ✅ FEN notation import/export
+✅ Two-player mode with player names and random color assignment
+✅ Basic AI opponent with phase-based strategy
+🚧 Advanced multi-agent AI with Claude agent dispatch (planned)
+🚧 Tactical pattern recognition and position evaluation (planned)
+🚧 Stockfish integration for stronger play (planned)
 
 ## License
 
