@@ -206,6 +206,10 @@ RSpec.describe CLI do
     let(:cli) { CLI.new(players: { white: "Alice", black: "Bob" }) }
     let(:game) { cli.instance_variable_get(:@game) }
 
+    it 'returns false for nil move notation' do
+      expect(cli.send(:handle_move, nil)).to be false
+    end
+
     it 'returns false for empty move notation' do
       expect(cli.send(:handle_move, '')).to be false
     end

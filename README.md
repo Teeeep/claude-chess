@@ -71,7 +71,7 @@ bundle exec rspec --format documentation
 
 The CLI provides an interactive chess game with:
 - **Two-player mode** with player names and random color assignment
-- **AI opponent** using multi-agent architecture (Opening/Midgame/Endgame specialists)
+- **AI opponent** using phase-based heuristics (Opening/Midgame/Endgame strategies)
 - Beautiful Unicode chess pieces (♔♕♖♗♘♙)
 - Checkerboard pattern for empty squares
 - Move validation and legal move checking

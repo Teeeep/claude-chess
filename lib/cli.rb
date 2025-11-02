@@ -205,7 +205,7 @@ class CLI
   end
 
   def handle_move(move_notation)
-    if move_notation.empty?
+    if move_notation.nil? || move_notation.empty?
       puts "Please enter a move"
       return false
     end
