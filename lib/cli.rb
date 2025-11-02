@@ -294,7 +294,9 @@ class CLI
       puts ""
 
       print "Enter your name: "
-      player_name = gets.chomp.strip
+      input = gets
+      return { white: "Player", black: "Claude" } if input.nil?  # Handle EOF gracefully
+      player_name = input.chomp.strip
       player_name = "Player" if player_name.empty?
 
       # Randomly assign colors
@@ -311,11 +313,15 @@ class CLI
       puts ""
 
       print "Enter name for Player 1: "
-      player1 = gets.chomp.strip
+      input = gets
+      return { white: "Player 1", black: "Player 2" } if input.nil?  # Handle EOF gracefully
+      player1 = input.chomp.strip
       player1 = "Player 1" if player1.empty?
 
       print "Enter name for Player 2: "
-      player2 = gets.chomp.strip
+      input = gets
+      return { white: "Player 1", black: "Player 2" } if input.nil?  # Handle EOF gracefully
+      player2 = input.chomp.strip
       player2 = "Player 2" if player2.empty?
 
       # Randomly assign colors

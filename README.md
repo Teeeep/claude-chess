@@ -151,21 +151,27 @@ spec/
 - **Position Cloning**: Deep board cloning for move simulation
 - **Notation Support**: Parse and generate algebraic notation
 
-### Multi-Agent AI System
+### Chess AI Opponent
 
-The chess AI uses a multi-agent architecture where specialized agents analyze positions from different perspectives:
+The chess AI provides a basic opponent using heuristic evaluation and phase-based strategy:
 
-- **Opening Agent**: Focuses on center control, piece development, and opening principles
-- **Midgame Agent**: Looks for tactical opportunities, piece activity, and threats
-- **Endgame Agent**: Prioritizes king activity, pawn promotion, and simplified positions
-- **Coordinator**: Synthesizes recommendations and selects moves based on game phase
-
-The AI automatically detects the current game phase (opening/midgame/endgame) based on:
-- Move count
-- Material on the board
+**Game Phase Detection** - The AI automatically detects the current game phase based on:
+- Move count (opening: first 30 plies)
+- Material on the board (endgame: ≤25 points or no queens)
 - Presence of queens
 
-Each agent evaluates the position and recommends moves. The coordinator selects the most appropriate recommendation based on the current phase. After each move, the AI displays its reasoning, allowing you to see its thought process.
+**Phase-Based Strategy:**
+- **Opening Phase**: Prioritizes center control (e4, d4, e5, d5) and piece development
+- **Midgame Phase**: Selects from available legal moves
+- **Endgame Phase**: Prioritizes pawn advancement toward promotion
+
+**Transparency**: After each move, the AI displays its reasoning and thought process, showing which strategy it applied and why.
+
+**Current Implementation**: The AI uses simple heuristic evaluation to provide a playable opponent. Future enhancements will include:
+- Multi-agent architecture with specialized Claude agents for each phase
+- Tactical pattern recognition (captures, checks, threats)
+- Position evaluation and material counting
+- Integration with Stockfish for stronger play
 
 ## Development
 
@@ -186,13 +192,15 @@ Built using Test-Driven Development (TDD) with RSpec:
 
 ✅ Core chess engine complete
 ✅ All major rules implemented
-✅ Comprehensive test coverage (115 tests, 100% pass rate)
+✅ Comprehensive test coverage (155 tests, 100% pass rate)
 ✅ CLI interface with interactive gameplay
 ✅ Time controls/clock with increment support
 ✅ FEN notation import/export
-✅ Multi-agent AI opponent (Opening/Midgame/Endgame specialists)
-🚧 Advanced AI with Claude agent dispatch (planned)
-🚧 Stockfish integration for evaluation (planned)
+✅ Two-player mode with player names and random color assignment
+✅ Basic AI opponent with phase-based strategy
+🚧 Advanced multi-agent AI with Claude agent dispatch (planned)
+🚧 Tactical pattern recognition and position evaluation (planned)
+🚧 Stockfish integration for stronger play (planned)
 
 ## License
 

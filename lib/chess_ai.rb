@@ -6,6 +6,14 @@ require_relative 'fen'
 class ChessAI
   attr_reader :last_recommendations, :game_phase
 
+  # Phase detection thresholds
+  OPENING_MOVE_THRESHOLD = 30  # First 30 plies (15 full moves per side)
+  OPENING_MATERIAL_THRESHOLD = 70  # Material points for opening phase
+  ENDGAME_MATERIAL_THRESHOLD = 25  # Material points for endgame phase
+
+  # Piece values for material counting
+  PIECE_VALUES = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9 }.freeze
+
   def initialize
     @last_recommendations = {}
     @game_phase = nil
@@ -28,7 +36,7 @@ class ChessAI
     context = build_context(game, fen, legal_moves)
 
     # Dispatch agents in parallel based on game phase
-    @last_recommendations = dispatch_agents(context, @game_phase)
+    @last_recommendations = dispatch_agents(context, @game_phase, game)
 
     # Coordinator synthesizes recommendations
     coordinate_decision(game, @last_recommendations, @game_phase)
@@ -63,10 +71,10 @@ class ChessAI
     material = count_material(game)
 
     # Opening: First 15 moves or both sides have most pieces
-    if move_count < 30 && material[:total] >= 70
+    if move_count < OPENING_MOVE_THRESHOLD && material[:total] >= OPENING_MATERIAL_THRESHOLD
       :opening
     # Endgame: Low material (queens traded or very few pieces)
-    elsif material[:total] <= 25 || (!material[:white_queen] && !material[:black_queen])
+    elsif material[:total] <= ENDGAME_MATERIAL_THRESHOLD || (!material[:white_queen] && !material[:black_queen])
       :endgame
     else
       :midgame
@@ -80,17 +88,15 @@ class ChessAI
     white_queen = false
     black_queen = false
 
-    values = { pawn: 1, knight: 3, bishop: 3, rook: 5, queen: 9 }
-
     game.board.pieces_of_color(:white).each do |_, piece|
       next if piece.type == :king
-      white_material += values[piece.type]
+      white_material += PIECE_VALUES[piece.type]
       white_queen = true if piece.type == :queen
     end
 
     game.board.pieces_of_color(:black).each do |_, piece|
       next if piece.type == :king
-      black_material += values[piece.type]
+      black_material += PIECE_VALUES[piece.type]
       black_queen = true if piece.type == :queen
     end
 
@@ -126,6 +132,13 @@ class ChessAI
     "#{file_letter}#{rank_number}"
   end
 
+  # Convert algebraic notation to [rank, file]
+  def algebraic_to_position(algebraic)
+    file = algebraic[0].ord - 'a'.ord
+    rank = 8 - algebraic[1].to_i
+    [rank, file]
+  end
+
   # Build context string for agents
   def build_context(game, fen, legal_moves)
     material = count_material(game)
@@ -144,7 +157,7 @@ class ChessAI
   end
 
   # Dispatch specialized agents based on game phase
-  def dispatch_agents(context, phase)
+  def dispatch_agents(context, phase, game)
     recommendations = {}
     legal_moves = context[:legal_moves]
 
@@ -160,7 +173,7 @@ class ChessAI
     recommendations[:midgame] = midgame_move
 
     # Endgame agent: Focus on king activity and pawn promotion
-    endgame_move = evaluate_endgame_moves(legal_moves, context)
+    endgame_move = evaluate_endgame_moves(legal_moves, context, game)
     recommendations[:endgame] = endgame_move
 
     # Coordinator: Select based on game phase
@@ -198,9 +211,14 @@ class ChessAI
   end
 
   # Evaluate moves from endgame perspective
-  def evaluate_endgame_moves(legal_moves, context)
-    # Prioritize pawn moves in endgame
-    pawn_move = legal_moves.find { |m| m[0] >= 'a' && m[0] <= 'h' && m[1].to_i <= 8 }
+  def evaluate_endgame_moves(legal_moves, context, game)
+    # Prioritize pawn moves in endgame by checking piece type at source position
+    pawn_move = legal_moves.find do |move|
+      from_pos = algebraic_to_position(move[0..1])
+      piece = game.board.piece_at(from_pos)
+      piece&.type == :pawn
+    end
+
     move = pawn_move || legal_moves.sample
 
     {
