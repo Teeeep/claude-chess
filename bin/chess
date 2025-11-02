@@ -25,6 +25,10 @@ OptionParser.new do |opts|
     options[:players] = { white: "White", black: "Black" }
   end
 
+  opts.on("-c", "--vs-claude", "Play against Claude AI") do
+    options[:vs_claude] = true
+  end
+
   opts.on("-h", "--help", "Show this help") do
     puts opts
     exit

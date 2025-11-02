@@ -53,6 +53,9 @@ bundle exec rspec --format documentation
 # Solo/practice mode (skip player setup)
 ./bin/chess --solo
 
+# Play against Claude AI (multi-agent system)
+./bin/chess --vs-claude
+
 # With time control (10 minutes per player)
 ./bin/chess --time 10
 
@@ -61,10 +64,14 @@ bundle exec rspec --format documentation
 
 # Load a specific position from FEN
 ./bin/chess --fen "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+
+# Combine options (play Claude with time control)
+./bin/chess --vs-claude --time 5 --increment 3
 ```
 
 The CLI provides an interactive chess game with:
 - **Two-player mode** with player names and random color assignment
+- **AI opponent** using multi-agent architecture (Opening/Midgame/Endgame specialists)
 - Beautiful Unicode chess pieces (♔♕♖♗♘♙)
 - Checkerboard pattern for empty squares
 - Move validation and legal move checking
@@ -72,6 +79,7 @@ The CLI provides an interactive chess game with:
 - Move history tracking
 - Chess clock with time controls and increments
 - FEN notation support for position import/export
+- AI reasoning display (see Claude's thought process)
 - Help system
 
 **In-Game Commands:**
@@ -129,6 +137,7 @@ lib/
   cli.rb           # Interactive command-line interface
   clock.rb         # Chess clock for time controls
   fen.rb           # FEN notation import/export
+  chess_ai.rb      # Multi-agent chess AI
 
 spec/
   *_spec.rb        # RSpec test files (115 tests, 100% passing)
@@ -141,6 +150,22 @@ spec/
 - **Move Validation**: Checks legal moves including king safety
 - **Position Cloning**: Deep board cloning for move simulation
 - **Notation Support**: Parse and generate algebraic notation
+
+### Multi-Agent AI System
+
+The chess AI uses a multi-agent architecture where specialized agents analyze positions from different perspectives:
+
+- **Opening Agent**: Focuses on center control, piece development, and opening principles
+- **Midgame Agent**: Looks for tactical opportunities, piece activity, and threats
+- **Endgame Agent**: Prioritizes king activity, pawn promotion, and simplified positions
+- **Coordinator**: Synthesizes recommendations and selects moves based on game phase
+
+The AI automatically detects the current game phase (opening/midgame/endgame) based on:
+- Move count
+- Material on the board
+- Presence of queens
+
+Each agent evaluates the position and recommends moves. The coordinator selects the most appropriate recommendation based on the current phase. After each move, the AI displays its reasoning, allowing you to see its thought process.
 
 ## Development
 
@@ -165,6 +190,9 @@ Built using Test-Driven Development (TDD) with RSpec:
 ✅ CLI interface with interactive gameplay
 ✅ Time controls/clock with increment support
 ✅ FEN notation import/export
+✅ Multi-agent AI opponent (Opening/Midgame/Endgame specialists)
+🚧 Advanced AI with Claude agent dispatch (planned)
+🚧 Stockfish integration for evaluation (planned)
 
 ## License
 

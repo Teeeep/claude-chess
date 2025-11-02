@@ -1,6 +1,7 @@
 require_relative 'game'
 require_relative 'clock'
 require_relative 'fen'
+require_relative 'chess_ai'
 
 class CLI
   PIECE_SYMBOLS = {
@@ -8,10 +9,12 @@ class CLI
     black: { king: '♚', queen: '♛', rook: '♜', bishop: '♝', knight: '♞', pawn: '♟' }
   }.freeze
 
-  def initialize(time_control: nil, fen: nil, players: nil)
+  def initialize(time_control: nil, fen: nil, players: nil, vs_claude: false)
     @game = fen ? FEN.import(fen) : Game.new
     @clock = time_control ? Clock.new(**time_control) : nil
-    @players = players || setup_players
+    @vs_claude = vs_claude
+    @chess_ai = vs_claude ? ChessAI.new : nil
+    @players = players || setup_players(vs_claude)
   end
 
   def start
@@ -43,30 +46,48 @@ class CLI
       display_board
       display_status
 
-      move = get_move
+      # Check if it's Claude's turn
+      if @vs_claude && @players[@game.current_player] == "Claude"
+        puts "\nClaude is thinking..."
+        move = @chess_ai.get_move(@game)
 
-      case move
-      when 'quit', 'exit'
-        puts "\nThanks for playing!"
-        exit
-      when 'help'
-        show_help
-        next
-      when 'history'
-        show_history
-        next
-      when 'fen'
-        show_fen
-        next
-      when 'undo'
-        puts "\nUndo not yet implemented"
-        next
-      else
         if handle_move(move)
-          # Move was successful, update clock
+          # Show Claude's reasoning
+          puts @chess_ai.explain_decision
+
+          # Update clock
           if @clock
             @clock.stop_move
             @clock.start_move(@game.current_player)
+          end
+        end
+      else
+        # Human player's turn
+        move = get_move
+
+        case move
+        when 'quit', 'exit'
+          puts "\nThanks for playing!"
+          exit
+        when 'help'
+          show_help
+          next
+        when 'history'
+          show_history
+          next
+        when 'fen'
+          show_fen
+          next
+        when 'undo'
+          puts "\nUndo not yet implemented"
+          next
+        else
+          if handle_move(move)
+            # Move was successful, update clock
+            if @clock
+              @clock.stop_move
+              @clock.start_move(@game.current_player)
+            end
           end
         end
       end
@@ -254,25 +275,45 @@ class CLI
     puts ""
   end
 
-  def setup_players
-    puts "\n" + "=" * 50
-    puts "PLAYER SETUP".center(50)
-    puts "=" * 50
-    puts ""
+  def setup_players(vs_claude = false)
+    if vs_claude
+      # Playing against Claude AI
+      puts "\n" + "=" * 50
+      puts "PLAYER SETUP".center(50)
+      puts "=" * 50
+      puts ""
 
-    print "Enter name for Player 1: "
-    player1 = gets.chomp.strip
-    player1 = "Player 1" if player1.empty?
+      print "Enter your name: "
+      player_name = gets.chomp.strip
+      player_name = "Player" if player_name.empty?
 
-    print "Enter name for Player 2: "
-    player2 = gets.chomp.strip
-    player2 = "Player 2" if player2.empty?
-
-    # Randomly assign colors
-    if rand(2) == 0
-      { white: player1, black: player2 }
+      # Randomly assign colors
+      if rand(2) == 0
+        { white: player_name, black: "Claude" }
+      else
+        { white: "Claude", black: player_name }
+      end
     else
-      { white: player2, black: player1 }
+      # Two-player mode
+      puts "\n" + "=" * 50
+      puts "PLAYER SETUP".center(50)
+      puts "=" * 50
+      puts ""
+
+      print "Enter name for Player 1: "
+      player1 = gets.chomp.strip
+      player1 = "Player 1" if player1.empty?
+
+      print "Enter name for Player 2: "
+      player2 = gets.chomp.strip
+      player2 = "Player 2" if player2.empty?
+
+      # Randomly assign colors
+      if rand(2) == 0
+        { white: player1, black: player2 }
+      else
+        { white: player2, black: player1 }
+      end
     end
   end
 
