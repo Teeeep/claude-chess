@@ -21,6 +21,13 @@ RSpec.describe 'Draw Conditions' do
     it 'detects king vs king' do
       # Set up position with only kings
       game = Game.new
+      # Clear the board
+      8.times do |rank|
+        8.times do |file|
+          game.board.place_piece(nil, [rank, file])
+        end
+      end
+      # Place only kings
       game.board.place_piece(King.new(:white), [7, 4])
       game.board.place_piece(King.new(:black), [0, 4])
 
@@ -29,6 +36,13 @@ RSpec.describe 'Draw Conditions' do
 
     it 'detects king and bishop vs king' do
       game = Game.new
+      # Clear the board
+      8.times do |rank|
+        8.times do |file|
+          game.board.place_piece(nil, [rank, file])
+        end
+      end
+      # Place pieces
       game.board.place_piece(King.new(:white), [7, 4])
       game.board.place_piece(Bishop.new(:white), [7, 5])
       game.board.place_piece(King.new(:black), [0, 4])
@@ -38,6 +52,13 @@ RSpec.describe 'Draw Conditions' do
 
     it 'detects king and knight vs king' do
       game = Game.new
+      # Clear the board
+      8.times do |rank|
+        8.times do |file|
+          game.board.place_piece(nil, [rank, file])
+        end
+      end
+      # Place pieces
       game.board.place_piece(King.new(:white), [7, 4])
       game.board.place_piece(Knight.new(:white), [7, 1])
       game.board.place_piece(King.new(:black), [0, 4])
@@ -47,6 +68,13 @@ RSpec.describe 'Draw Conditions' do
 
     it 'does not detect insufficient material with pawns' do
       game = Game.new
+      # Clear the board
+      8.times do |rank|
+        8.times do |file|
+          game.board.place_piece(nil, [rank, file])
+        end
+      end
+      # Place pieces
       game.board.place_piece(King.new(:white), [7, 4])
       game.board.place_piece(Pawn.new(:white), [6, 4])
       game.board.place_piece(King.new(:black), [0, 4])

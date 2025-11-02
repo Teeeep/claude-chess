@@ -31,6 +31,7 @@ RSpec.describe 'Castling' do
       # Place black rook attacking f1
       game.board.place_piece(Rook.new(:black), [0, 5])
       game.board.place_piece(nil, [1, 5])
+      game.board.place_piece(nil, [6, 5]) # Remove f2 pawn blocking attack
 
       result = game.make_move('O-O')
       expect(result).to be false
@@ -40,6 +41,7 @@ RSpec.describe 'Castling' do
       # Place black rook attacking e1
       game.board.place_piece(Rook.new(:black), [0, 4])
       game.board.place_piece(nil, [1, 4])
+      game.board.place_piece(nil, [6, 4]) # Remove e2 pawn blocking attack
 
       result = game.make_move('O-O')
       expect(result).to be false
