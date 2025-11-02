@@ -111,6 +111,36 @@ RSpec.describe FEN do
       expect { FEN.import('invalid') }.to raise_error(ArgumentError)
       expect { FEN.import('rnbqkbnr/pppppppp w KQkq - 0 1') }.to raise_error(ArgumentError)
     end
+
+    it 'raises error for invalid piece symbols' do
+      expect { FEN.import('rnbqkXnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1') }
+        .to raise_error(ArgumentError, /invalid piece symbol/)
+    end
+
+    it 'raises error for wrong number of files in rank' do
+      expect { FEN.import('rnbqkbnr/ppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1') }
+        .to raise_error(ArgumentError, /rank.*7 squares/)
+    end
+
+    it 'raises error for invalid active color' do
+      expect { FEN.import('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR x KQkq - 0 1') }
+        .to raise_error(ArgumentError, /active color must be/)
+    end
+
+    it 'raises error for invalid castling rights' do
+      expect { FEN.import('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KKK - 0 1') }
+        .to raise_error(ArgumentError, /castling rights/)
+    end
+
+    it 'raises error for invalid en passant square' do
+      expect { FEN.import('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq e9 0 1') }
+        .to raise_error(ArgumentError, /en passant target/)
+    end
+
+    it 'raises error for en passant on wrong rank' do
+      expect { FEN.import('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq e4 0 1') }
+        .to raise_error(ArgumentError, /rank 3 or 6/)
+    end
   end
 
   describe 'round-trip conversion' do

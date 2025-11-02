@@ -53,6 +53,13 @@ class FEN
 
     piece_placement, active_color, castling, en_passant, halfmove, fullmove = parts
 
+    # Validate FEN components
+    validate_piece_placement(piece_placement)
+
+    unless active_color =~ /^[wb]$/
+      raise ArgumentError, "Invalid FEN: active color must be 'w' or 'b'"
+    end
+
     # Create empty game (we'll set up the position manually)
     game = Game.new
 
@@ -66,20 +73,14 @@ class FEN
     # Import piece placement
     import_piece_placement(game.board, piece_placement)
 
-    # Set active player
-    game.instance_variable_set(:@current_player, active_color == 'w' ? :white : :black)
-
-    # Set castling rights
-    import_castling_rights(game, castling)
-
-    # Set en passant target
-    import_en_passant(game, en_passant)
-
-    # Set halfmove clock
-    game.instance_variable_set(:@halfmove_clock, halfmove.to_i)
-
-    # Set fullmove number
-    game.instance_variable_set(:@fullmove_number, fullmove.to_i)
+    # Set game state using proper API
+    game.set_state(
+      current_player: active_color == 'w' ? :white : :black,
+      castling_rights: parse_castling_rights(castling),
+      en_passant_target: parse_en_passant(en_passant),
+      halfmove_clock: halfmove.to_i,
+      fullmove_number: fullmove.to_i
+    )
 
     game
   end
@@ -114,7 +115,7 @@ class FEN
   end
 
   def self.export_castling_rights(game)
-    rights = game.instance_variable_get(:@castling_rights)
+    rights = game.castling_rights
     castling = ''
 
     castling += 'K' if rights[:white_kingside]
@@ -126,7 +127,7 @@ class FEN
   end
 
   def self.export_en_passant(game)
-    target = game.instance_variable_get(:@en_passant_target)
+    target = game.en_passant_target
     return '-' unless target
 
     rank, file = target
@@ -136,11 +137,11 @@ class FEN
   end
 
   def self.export_halfmove_clock(game)
-    game.instance_variable_get(:@halfmove_clock).to_s
+    game.halfmove_clock.to_s
   end
 
   def self.export_fullmove_number(game)
-    game.instance_variable_get(:@fullmove_number).to_s
+    game.fullmove_number.to_s
   end
 
   def self.import_piece_placement(board, placement)
@@ -176,23 +177,61 @@ class FEN
     end
   end
 
-  def self.import_castling_rights(game, castling)
-    rights = {
+  def self.parse_castling_rights(castling)
+    # Validate castling string format
+    unless castling == '-' || castling =~ /^K?Q?k?q?$/ && castling.length > 0
+      raise ArgumentError, "Invalid FEN: castling rights must be '-' or combination of KQkq (no duplicates)"
+    end
+
+    {
       white_kingside: castling.include?('K'),
       white_queenside: castling.include?('Q'),
       black_kingside: castling.include?('k'),
       black_queenside: castling.include?('q')
     }
-
-    game.instance_variable_set(:@castling_rights, rights)
   end
 
-  def self.import_en_passant(game, en_passant)
-    return if en_passant == '-'
+  def self.parse_en_passant(en_passant)
+    return nil if en_passant == '-'
+
+    # Validate en passant format
+    unless en_passant =~ /^[a-h][1-8]$/
+      raise ArgumentError, "Invalid FEN: en passant target must be '-' or square like 'e3'"
+    end
 
     file = en_passant[0].ord - 'a'.ord
     rank = 8 - en_passant[1].to_i  # Convert from FEN (1-8) to array index (0-7)
 
-    game.instance_variable_set(:@en_passant_target, [rank, file])
+    # Validate en passant is on correct rank (rank 3 for white, rank 6 for black)
+    unless rank == 2 || rank == 5
+      raise ArgumentError, "Invalid FEN: en passant target must be on rank 3 or 6"
+    end
+
+    [rank, file]
+  end
+
+  def self.validate_piece_placement(placement)
+    ranks = placement.split('/')
+    unless ranks.length == 8
+      raise ArgumentError, "Invalid FEN: must have exactly 8 ranks"
+    end
+
+    ranks.each_with_index do |rank_str, index|
+      file_count = 0
+
+      rank_str.each_char do |char|
+        if char =~ /\d/
+          file_count += char.to_i
+        elsif char =~ /[pnbrqkPNBRQK]/
+          file_count += 1
+        else
+          raise ArgumentError, "Invalid FEN: invalid piece symbol '#{char}' in rank #{index + 1}"
+        end
+      end
+
+      unless file_count == 8
+        raise ArgumentError, "Invalid FEN: rank #{index + 1} has #{file_count} squares (expected 8)"
+      end
+    end
   end
 end
