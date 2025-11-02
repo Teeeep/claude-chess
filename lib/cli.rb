@@ -117,18 +117,18 @@ class CLI
 
         if piece
           symbol = PIECE_SYMBOLS[piece.color][piece.type]
-          # Use background colors for checkerboard
+          # Use chess.com-style colors: light tan and dark brown/green
           if is_light
-            print "\033[47m #{symbol} \033[0m"  # White background
+            print "\033[48;5;223m #{symbol} \033[0m"  # Light beige/tan (RGB: 238, 238, 210)
           else
-            print "\033[100m #{symbol} \033[0m"  # Dark gray background
+            print "\033[48;5;180m #{symbol} \033[0m"  # Dark tan/brown (RGB: 118, 150, 86)
           end
         else
           # Empty square
           if is_light
-            print "\033[47m   \033[0m"  # White background
+            print "\033[48;5;223m   \033[0m"  # Light beige/tan
           else
-            print "\033[100m   \033[0m"  # Dark gray background
+            print "\033[48;5;180m   \033[0m"  # Dark tan/brown
           end
         end
 
