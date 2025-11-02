@@ -8,9 +8,10 @@ class CLI
     black: { king: '♚', queen: '♛', rook: '♜', bishop: '♝', knight: '♞', pawn: '♟' }
   }.freeze
 
-  def initialize(time_control: nil, fen: nil)
+  def initialize(time_control: nil, fen: nil, players: nil)
     @game = fen ? FEN.import(fen) : Game.new
     @clock = time_control ? Clock.new(**time_control) : nil
+    @players = players || setup_players
   end
 
   def start
@@ -18,7 +19,10 @@ class CLI
     puts "♔  RUBY CHESS ENGINE  ♔".center(50)
     puts "=" * 50
     puts "\nWelcome to Ruby Chess!"
-    puts "Enter moves in algebraic notation (e.g., e2e4, Nf3, O-O)"
+
+    show_player_assignment
+
+    puts "\nEnter moves in algebraic notation (e.g., e2e4, Nf3, O-O)"
     puts "Type 'help' for commands, 'quit' to exit\n\n"
 
     game_loop
@@ -109,7 +113,8 @@ class CLI
   end
 
   def display_status
-    puts "\n#{@game.current_player.to_s.capitalize} to move"
+    current_player_name = @players[@game.current_player]
+    puts "\n#{current_player_name}'s turn (#{@game.current_player.to_s.capitalize})"
 
     if @game.in_check?(@game.current_player)
       puts "⚠️  CHECK! ⚠️"
@@ -119,7 +124,9 @@ class CLI
     if @clock
       white_time = @clock.formatted_time(:white)
       black_time = @clock.formatted_time(:black)
-      puts "\n⏱  White: #{white_time}  |  Black: #{black_time}"
+      white_player = @players[:white]
+      black_player = @players[:black]
+      puts "\n⏱  #{white_player}: #{white_time}  |  #{black_player}: #{black_time}"
 
       # Warn if low on time (< 1 minute)
       if @clock.time_for(@game.current_player) < 60
@@ -137,10 +144,12 @@ class CLI
 
     if @game_over_reason == :timeout
       winner = @game.current_player == :white ? :black : :white
-      puts "\n🏆 #{winner.to_s.capitalize} wins on time! 🏆"
+      winner_name = @players[winner]
+      puts "\n🏆 #{winner_name} (#{winner.to_s.capitalize}) wins on time! 🏆"
     elsif @game.checkmate?(@game.current_player)
       winner = @game.current_player == :white ? :black : :white
-      puts "\n🏆 #{winner.to_s.capitalize} wins by checkmate! 🏆"
+      winner_name = @players[winner]
+      puts "\n🏆 #{winner_name} (#{winner.to_s.capitalize}) wins by checkmate! 🏆"
     elsif @game.stalemate?(@game.current_player)
       puts "\n🤝 Draw by stalemate"
     elsif @game.result&.include?("fifty-move rule")
@@ -242,6 +251,37 @@ class CLI
       puts "" if @game.move_history.length.odd?
     end
 
+    puts ""
+  end
+
+  def setup_players
+    puts "\n" + "=" * 50
+    puts "PLAYER SETUP".center(50)
+    puts "=" * 50
+    puts ""
+
+    print "Enter name for Player 1: "
+    player1 = gets.chomp.strip
+    player1 = "Player 1" if player1.empty?
+
+    print "Enter name for Player 2: "
+    player2 = gets.chomp.strip
+    player2 = "Player 2" if player2.empty?
+
+    # Randomly assign colors
+    if rand(2) == 0
+      { white: player1, black: player2 }
+    else
+      { white: player2, black: player1 }
+    end
+  end
+
+  def show_player_assignment
+    puts "\n" + "=" * 50
+    puts "COLOR ASSIGNMENT".center(50)
+    puts "=" * 50
+    puts "\n#{@players[:white]} plays as WHITE ♔"
+    puts "#{@players[:black]} plays as BLACK ♚"
     puts ""
   end
 end

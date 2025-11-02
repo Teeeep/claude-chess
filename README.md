@@ -47,8 +47,11 @@ bundle exec rspec --format documentation
 ### Play Chess (Interactive CLI)
 
 ```bash
-# Basic game
+# Two-player game (prompts for names, randomly assigns colors)
 ./bin/chess
+
+# Solo/practice mode (skip player setup)
+./bin/chess --solo
 
 # With time control (10 minutes per player)
 ./bin/chess --time 10
@@ -61,6 +64,7 @@ bundle exec rspec --format documentation
 ```
 
 The CLI provides an interactive chess game with:
+- **Two-player mode** with player names and random color assignment
 - Beautiful Unicode chess pieces (♔♕♖♗♘♙)
 - Checkerboard pattern for empty squares
 - Move validation and legal move checking

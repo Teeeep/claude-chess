@@ -21,6 +21,10 @@ OptionParser.new do |opts|
     options[:fen] = fen
   end
 
+  opts.on("-s", "--solo", "Skip player setup (solo/practice mode)") do
+    options[:players] = { white: "White", black: "Black" }
+  end
+
   opts.on("-h", "--help", "Show this help") do
     puts opts
     exit
