@@ -117,11 +117,11 @@ class CLI
 
         if piece
           symbol = PIECE_SYMBOLS[piece.color][piece.type]
-          # Use chess.com-style colors: light tan and dark brown/green
+          # Use chess.com-style colors with black outlined pieces
           if is_light
-            print "\033[48;5;223m #{symbol} \033[0m"  # Light beige/tan (RGB: 238, 238, 210)
+            print "\033[48;5;223m\033[30;1m #{symbol} \033[0m"  # Light square + bold black text
           else
-            print "\033[48;5;180m #{symbol} \033[0m"  # Dark tan/brown (RGB: 118, 150, 86)
+            print "\033[48;5;180m\033[30;1m #{symbol} \033[0m"  # Dark square + bold black text
           end
         else
           # Empty square
