@@ -19,9 +19,10 @@ A complete, hand-rolled chess engine implementation in Ruby with full rule suppo
 - Position cloning for move validation
 
 ✅ **Test Coverage**
-- 115 comprehensive RSpec test examples
+- 203 comprehensive RSpec test examples
 - 100% pass rate (all tests passing)
 - TDD approach throughout development
+- Real game replay validation (68-move Lichess game)
 
 ## Installation
 
@@ -82,8 +83,19 @@ The CLI provides an interactive chess game with:
 - AI reasoning display (see Claude's thought process)
 - Help system
 
+**Move Notation Support:**
+
+The engine accepts multiple notation formats (case-insensitive):
+
+- **Standard Algebraic Notation (SAN)**: `e4`, `Nf3`, `Bc4`, `O-O`, `Qxd5`
+- **Long Algebraic Notation**: `e2e4`, `g1f3`, `f1c4`
+- **Disambiguation**: `Nbd7`, `Rae1`, `R1a3` (when multiple pieces can reach same square)
+- **Castling**: `O-O` (kingside), `O-O-O` (queenside), also accepts `o-o` and `0-0`
+- **Promotion**: `e8=Q`, `e7e8q` (also accepts lowercase promotion pieces)
+- **Captures**: `exd5`, `Nxe5` (x notation optional)
+- **Case-insensitive**: Accepts `E4`, `NF3`, `nf3`, `e2E4`, etc.
+
 **In-Game Commands:**
-- Enter moves in algebraic notation: `e2e4`, `Nf3`, `O-O`
 - `help` - Show available commands
 - `history` - View move history
 - `fen` - Export current position in FEN notation
@@ -97,11 +109,13 @@ require_relative 'lib/game'
 # Create a new game
 game = Game.new
 
-# Make moves using algebraic notation
-game.make_move('e2e4')  # Long algebraic
-game.make_move('e7e5')
-game.make_move('Ng1f3') # Piece moves
-game.make_move('Nb8c6')
+# Make moves using algebraic notation (case-insensitive)
+game.make_move('e4')    # Standard algebraic (pawn)
+game.make_move('e5')
+game.make_move('Nf3')   # Standard algebraic (piece)
+game.make_move('Nc6')
+game.make_move('e2e4')  # Long algebraic also supported
+game.make_move('O-O')   # Castling
 
 # Check game state
 game.in_check?(:white)     # Check if white is in check
@@ -140,7 +154,7 @@ lib/
   chess_ai.rb      # Multi-agent chess AI
 
 spec/
-  *_spec.rb        # RSpec test files (115 tests, 100% passing)
+  *_spec.rb        # RSpec test files (203 tests, 100% passing)
 ```
 
 ## Architecture
@@ -192,7 +206,8 @@ Built using Test-Driven Development (TDD) with RSpec:
 
 ✅ Core chess engine complete
 ✅ All major rules implemented
-✅ Comprehensive test coverage (155 tests, 100% pass rate)
+✅ Comprehensive test coverage (203 tests, 100% pass rate)
+✅ Standard algebraic notation support (SAN + long form)
 ✅ CLI interface with interactive gameplay
 ✅ Time controls/clock with increment support
 ✅ FEN notation import/export
