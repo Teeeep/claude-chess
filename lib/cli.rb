@@ -113,7 +113,8 @@ class CLI
         piece = @game.board.piece_at([rank, file])
 
         # Determine square color (light or dark)
-        is_light = (rank + file).even?
+        # Bottom-right (h1) should be light: rank=0, file=7 → sum=7 (odd)
+        is_light = (rank + file).odd?
 
         if piece
           symbol = PIECE_SYMBOLS[piece.color][piece.type]
