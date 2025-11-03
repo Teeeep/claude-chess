@@ -15,6 +15,7 @@ class CLI
     @vs_claude = vs_claude
     @chess_ai = vs_claude ? ChessAI.new : nil
     @players = players || setup_players(vs_claude)
+    @flip_board = should_flip_board?
   end
 
   def start
@@ -103,45 +104,90 @@ class CLI
 
   def display_board
     puts "\n"
-    puts "     a   b   c   d   e   f   g   h"
-    puts "   ┌───┬───┬───┬───┬───┬───┬───┬───┐"
 
-    7.downto(0) do |rank|
-      print " #{rank + 1} │"
+    if @flip_board
+      # Black's perspective - flip the board
+      puts "     h   g   f   e   d   c   b   a"
+      puts "   ┌───┬───┬───┬───┬───┬───┬───┬───┐"
 
-      0.upto(7) do |file|
-        piece = @game.board.piece_at([rank, file])
+      0.upto(7) do |rank|
+        print " #{rank + 1} │"
 
-        # Determine square color (light or dark)
-        # Bottom-right (h1) should be light: rank=0, file=7 → sum=7 (odd)
-        is_light = (rank + file).odd?
+        7.downto(0) do |file|
+          piece = @game.board.piece_at([rank, file])
 
-        if piece
-          symbol = PIECE_SYMBOLS[piece.color][piece.type]
-          # Use chess.com-style colors with black outlined pieces
-          if is_light
-            print "\033[48;5;223m\033[30;1m #{symbol} \033[0m"  # Light square + bold black text
+          # Determine square color (light or dark)
+          # Bottom-right (a8) should be light: rank=7, file=0 → sum=7 (odd)
+          is_light = (rank + file).odd?
+
+          if piece
+            symbol = PIECE_SYMBOLS[piece.color][piece.type]
+            # Use chess.com-style colors with black outlined pieces
+            if is_light
+              print "\033[48;5;223m\033[30;1m #{symbol} \033[0m"  # Light square + bold black text
+            else
+              print "\033[48;5;180m\033[30;1m #{symbol} \033[0m"  # Dark square + bold black text
+            end
           else
-            print "\033[48;5;180m\033[30;1m #{symbol} \033[0m"  # Dark square + bold black text
+            # Empty square
+            if is_light
+              print "\033[48;5;223m   \033[0m"  # Light beige/tan
+            else
+              print "\033[48;5;180m   \033[0m"  # Dark tan/brown
+            end
           end
-        else
-          # Empty square
-          if is_light
-            print "\033[48;5;223m   \033[0m"  # Light beige/tan
-          else
-            print "\033[48;5;180m   \033[0m"  # Dark tan/brown
-          end
+
+          print "│" unless file == 0
         end
 
-        print "│" unless file == 7
+        puts "│ #{rank + 1}"
+        puts "   ├───┼───┼───┼───┼───┼───┼───┼───┤" unless rank == 7
       end
 
-      puts "│ #{rank + 1}"
-      puts "   ├───┼───┼───┼───┼───┼───┼───┼───┤" unless rank == 0
-    end
+      puts "   └───┴───┴───┴───┴───┴───┴───┴───┘"
+      puts "     h   g   f   e   d   c   b   a"
+    else
+      # White's perspective - normal orientation
+      puts "     a   b   c   d   e   f   g   h"
+      puts "   ┌───┬───┬───┬───┬───┬───┬───┬───┐"
 
-    puts "   └───┴───┴───┴───┴───┴───┴───┴───┘"
-    puts "     a   b   c   d   e   f   g   h"
+      7.downto(0) do |rank|
+        print " #{rank + 1} │"
+
+        0.upto(7) do |file|
+          piece = @game.board.piece_at([rank, file])
+
+          # Determine square color (light or dark)
+          # Bottom-right (h1) should be light: rank=0, file=7 → sum=7 (odd)
+          is_light = (rank + file).odd?
+
+          if piece
+            symbol = PIECE_SYMBOLS[piece.color][piece.type]
+            # Use chess.com-style colors with black outlined pieces
+            if is_light
+              print "\033[48;5;223m\033[30;1m #{symbol} \033[0m"  # Light square + bold black text
+            else
+              print "\033[48;5;180m\033[30;1m #{symbol} \033[0m"  # Dark square + bold black text
+            end
+          else
+            # Empty square
+            if is_light
+              print "\033[48;5;223m   \033[0m"  # Light beige/tan
+            else
+              print "\033[48;5;180m   \033[0m"  # Dark tan/brown
+            end
+          end
+
+          print "│" unless file == 7
+        end
+
+        puts "│ #{rank + 1}"
+        puts "   ├───┼───┼───┼───┼───┼───┼───┼───┤" unless rank == 0
+      end
+
+      puts "   └───┴───┴───┴───┴───┴───┴───┴───┘"
+      puts "     a   b   c   d   e   f   g   h"
+    end
   end
 
   def display_status
@@ -341,5 +387,16 @@ class CLI
     puts "\n#{@players[:white]} plays as WHITE ♔"
     puts "#{@players[:black]} plays as BLACK ♚"
     puts ""
+  end
+
+  # Determine if board should be flipped (when human is playing Black)
+  def should_flip_board?
+    # Flip if human is Black (vs Claude mode)
+    if @vs_claude
+      # Human is Black if Black player is not "Claude"
+      return @players[:black] != "Claude"
+    end
+    # In two-player mode, don't flip (or could add logic to flip based on current player)
+    false
   end
 end
