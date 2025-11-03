@@ -73,8 +73,8 @@ class Move
     end
 
     # Standard algebraic: e4, Nf3, exd5, Nbd7, R1a3, etc.
-    # Remove check/checkmate/annotation symbols
-    clean = normalized.gsub(/[+#!?]/, '')
+    # Remove check/checkmate/annotation symbols and capture notation
+    clean = normalized.gsub(/[+#!?x]/, '')
 
     # Extract promotion if present (case insensitive) - do this BEFORE extracting destination
     if clean =~ /=[QRBNqrbn]/
@@ -91,6 +91,12 @@ class Move
     # Extract piece type if present (case insensitive)
     if clean[0] =~ /[KQRBNkqrbn]/
       result[:piece_type] = parse_piece_letter(clean[0])
+    end
+
+    # Special case: pawn capture (e.g., "ed5" from "exd5")
+    # If 3 chars, first char is a file, and no piece type, it's a pawn capture
+    if clean.length == 3 && clean[0] =~ /[a-h]/ && !result[:piece_type]
+      result[:from_file] = clean[0].ord - 'a'.ord
     end
 
     # Extract disambiguation (file and/or rank)

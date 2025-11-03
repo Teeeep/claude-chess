@@ -56,6 +56,9 @@ class CLI
           # Show Claude's reasoning
           puts @chess_ai.explain_decision
 
+          # Show updated board immediately after AI move
+          display_board
+
           # Update clock
           if @clock
             @clock.stop_move
@@ -106,12 +109,12 @@ class CLI
     puts "\n"
 
     if @flip_board
-      # Black's perspective - flip the board
+      # Black's perspective - flip the board (ranks 8-7 at bottom)
       puts "     h   g   f   e   d   c   b   a"
       puts "   ┌───┬───┬───┬───┬───┬───┬───┬───┐"
 
-      0.upto(7) do |rank|
-        print " #{rank + 1} │"
+      7.downto(0) do |rank|
+        print " #{8 - rank} │"
 
         7.downto(0) do |file|
           piece = @game.board.piece_at([rank, file])
@@ -140,8 +143,8 @@ class CLI
           print "│" unless file == 0
         end
 
-        puts "│ #{rank + 1}"
-        puts "   ├───┼───┼───┼───┼───┼───┼───┼───┤" unless rank == 7
+        puts "│ #{8 - rank}"
+        puts "   ├───┼───┼───┼───┼───┼───┼───┼───┤" unless rank == 0
       end
 
       puts "   └───┴───┴───┴───┴───┴───┴───┴───┘"
@@ -152,7 +155,7 @@ class CLI
       puts "   ┌───┬───┬───┬───┬───┬───┬───┬───┐"
 
       7.downto(0) do |rank|
-        print " #{rank + 1} │"
+        print " #{8 - rank} │"
 
         0.upto(7) do |file|
           piece = @game.board.piece_at([rank, file])
@@ -181,7 +184,7 @@ class CLI
           print "│" unless file == 7
         end
 
-        puts "│ #{rank + 1}"
+        puts "│ #{8 - rank}"
         puts "   ├───┼───┼───┼───┼───┼───┼───┼───┤" unless rank == 0
       end
 
